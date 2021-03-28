@@ -1,0 +1,23 @@
+name: "ngrok SSH tunnel (Windows)"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ngrok_ssh_tunnel:
+    runs-on: windows-2019
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install Choco and SSH server
+        run: |
+          choco install -y openssh -params '"/SSHServerFeature /KeyBasedAuthenticationFeature"'
+        shell: powershell
+      - name: Start SSH via ngrok
+        run: ./start_ngrok_tunnel.sh
+        env:
+          NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
+          USER_PASS: ${{ secrets.NGROK_PASS }}
+        shell: bash
+      - name: Keep tunnel alive for 24 hours
+        run: sleep 86400
+        shell: bash
