@@ -1,4 +1,4 @@
-name: "ngrok SSH tunnel (macOS)"
+name: "ngrok SSH tunnel (macOS 10.15)"
 
 on:
   workflow_dispatch:
