@@ -7,7 +7,7 @@ jobs:
   ngrok_ssh_tunnel:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: Start SSH via ngrok
         run: ./start_ngrok_tunnel.sh
         env:
