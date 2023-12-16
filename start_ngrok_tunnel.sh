@@ -1,6 +1,7 @@
 #!/bin/bash
 
 USER=$(whoami)
+UNPACK="unzip -o"
 
 if [[ -z "$NGROK_TOKEN" ]]; then
   echo "Please set 'NGROK_TOKEN'"
@@ -20,6 +21,7 @@ case $(uname) in
         chmod 755 "$HOME"
         mkdir "$HOME"/.ssh
         PKG="https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz"
+        UNPACK="tar xzvf"
         ;;
     *_NT-*)
         # I wasn't able to get remote login working on Windows using the public key
@@ -48,7 +50,7 @@ if [[ $(uname) = "Darwin" || $(uname) = "Linux" ]]; then
 fi
 
 curl -o ngrok.zip "$PKG"
-unzip -o ngrok.zip
+$UNPACK ngrok.zip
 
 echo "### Start ngrok proxy for 22 port ###"
 
