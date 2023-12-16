@@ -1,6 +1,7 @@
 #!/bin/bash
 
 USER=$(whoami)
+UNPACK="unzip -o"
 
 if [[ -z "$NGROK_TOKEN" ]]; then
   echo "Please set 'NGROK_TOKEN'"
@@ -11,7 +12,7 @@ echo "### Prep for remote login and install ngrok ###"
 
 case $(uname) in
     Darwin)
-        PKG="https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-darwin-amd64.zip"
+        PKG="https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-darwin-amd64.zip"
         ;;
     Linux)
         # By default, the Actions runner user lacks a .ssh directory and also
@@ -19,7 +20,8 @@ case $(uname) in
         # allow an incoming connection in that state.
         chmod 755 "$HOME"
         mkdir "$HOME"/.ssh
-        PKG="https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip"
+        PKG="https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz"
+        UNPACK="tar xzvf"
         ;;
     *_NT-*)
         # I wasn't able to get remote login working on Windows using the public key
@@ -30,7 +32,7 @@ case $(uname) in
             exit 1
         fi
         net user "$USER" "$USER_PASS"
-        PKG="https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip"
+        PKG="https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip"
         exe=.exe
         ;;
 esac
@@ -48,7 +50,7 @@ if [[ $(uname) = "Darwin" || $(uname) = "Linux" ]]; then
 fi
 
 curl -o ngrok.zip "$PKG"
-unzip -o ngrok.zip
+$UNPACK ngrok.zip
 
 echo "### Start ngrok proxy for 22 port ###"
 
