@@ -8,6 +8,10 @@ jobs:
     runs-on: windows-2019
     steps:
       - uses: actions/checkout@v3
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.21'
       - name: Install Choco and SSH server
         run: |
           choco install -y openssh -params '"/SSHServerFeature /KeyBasedAuthenticationFeature"'
