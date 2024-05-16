@@ -15,7 +15,6 @@ jobs:
       - name: Install Node
         uses: actions/setup-node@v3
         with:
-          cache: yarn
           node-version: "20.11.0"
       - name: Start SSH via ngrok
         run: ./start_ngrok_tunnel.sh
