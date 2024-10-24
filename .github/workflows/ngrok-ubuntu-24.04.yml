@@ -1,0 +1,19 @@
+name: "ngrok SSH tunnel (Ubuntu 24.04)"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ngrok_ssh_tunnel:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Start SSH via ngrok
+        run: ./start_ngrok_tunnel.sh
+        env:
+          NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
+          SSH_PUBLIC_KEY: ${{ secrets.NGROK_SSH_PUBLIC_KEY }}
+        shell: bash
+      - name: Keep tunnel alive for 24 hours
+        run: sleep 86400
+        shell: bash
