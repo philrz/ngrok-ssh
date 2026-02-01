@@ -1,11 +1,22 @@
-name: "ngrok SSH tunnel (macOS 14)"
+name: "ngrok SSH tunnel (macOS)"
 
 on:
   workflow_dispatch:
+    inputs:
+      run-on:
+        description: 'macOS runner image to use'
+        required: true
+        default: 'macos-15'
+        type: choice
+        options:
+        - macos-15
+        - macos-15-intel
+        - macos-14
+        - macos-14-large
 
 jobs:
   ngrok_ssh_tunnel:
-    runs-on: macos-14
+    runs-on: ${{ github.event.inputs.run-on }}
     steps:
       - uses: actions/checkout@v3
       - name: Start SSH via ngrok
