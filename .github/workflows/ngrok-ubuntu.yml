@@ -1,15 +1,25 @@
-name: "ngrok SSH tunnel (Ubuntu 24.04)"
+name: "ngrok SSH tunnel (Ubuntu)"
 
 on:
   workflow_dispatch:
+    inputs:
+      run-on:
+        description: 'Ubuntu runner image to use'
+        required: true
+        default: 'ubuntu-24.04'
+        type: choice
+        options:
+        - ubuntu-24.04
+        - ubuntu-22.04
+        - ubuntu-slim
 
 jobs:
   ngrok_ssh_tunnel:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ github.event.inputs.run-on }}
     steps:
       - uses: actions/checkout@v3
 
-      # Install SSH and disable socket activation (the Ubuntu-recommended way)
+      # Install SSH and disable socket activation (works for both 22.04 and 24.04)
       - name: Install and configure SSH server
         run: |
           sudo apt-get update
@@ -19,10 +29,10 @@ jobs:
           echo "UseDNS no" | sudo tee -a /etc/ssh/sshd_config
           echo "GSSAPIAuthentication no" | sudo tee -a /etc/ssh/sshd_config
 
-          # CRITICAL FIX: Disable socket activation and use traditional SSH daemon
-          # This is the official Ubuntu method to revert to pre-22.10 behavior
-          # Socket activation doesn't work properly with ngrok TCP tunnels
-          sudo systemctl disable --now ssh.socket
+          # CRITICAL FIX: Disable socket activation
+          # This fix works for BOTH Ubuntu 22.04 (if it has OpenSSH 9.x) AND Ubuntu 24.04
+          # Socket activation doesn't work with ngrok TCP tunnels
+          sudo systemctl disable --now ssh.socket 2>/dev/null || true
           sudo systemctl enable --now ssh.service
 
           # Verify SSH is running and listening on port 22
