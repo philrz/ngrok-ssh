@@ -8,12 +8,38 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v3
+
+      # Install SSH and disable socket activation (the Ubuntu-recommended way)
+      - name: Install and configure SSH server
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssh-server
+
+          # Configure SSH for better performance
+          echo "UseDNS no" | sudo tee -a /etc/ssh/sshd_config
+          echo "GSSAPIAuthentication no" | sudo tee -a /etc/ssh/sshd_config
+
+          # CRITICAL FIX: Disable socket activation and use traditional SSH daemon
+          # This is the official Ubuntu method to revert to pre-22.10 behavior
+          # Socket activation doesn't work properly with ngrok TCP tunnels
+          sudo systemctl disable --now ssh.socket
+          sudo systemctl enable --now ssh.service
+
+          # Verify SSH is running and listening on port 22
+          echo "=== SSH Status ==="
+          sudo systemctl status ssh.service --no-pager
+          echo ""
+          echo "=== Listening on port 22 ==="
+          sudo ss -tlnp | grep :22
+        shell: bash
+
       - name: Start SSH via ngrok
         run: ./start_ngrok_tunnel.sh
         env:
           NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
           SSH_PUBLIC_KEY: ${{ secrets.NGROK_SSH_PUBLIC_KEY }}
         shell: bash
+
       - name: Keep tunnel alive for 24 hours
         run: sleep 86400
         shell: bash
