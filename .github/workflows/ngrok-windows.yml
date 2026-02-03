@@ -2,16 +2,72 @@ name: "ngrok SSH tunnel (Windows)"
 
 on:
   workflow_dispatch:
+    inputs:
+      run-on:
+        description: 'Windows runner image to use'
+        required: true
+        default: 'windows-2022'
+        type: choice
+        options:
+        - windows-2022
+        - windows-2025
 
 jobs:
   ngrok_ssh_tunnel:
-    runs-on: windows-2019
+    runs-on: ${{ github.event.inputs.run-on }}
     steps:
       - uses: actions/checkout@v3
-      - name: Install Choco and SSH server
+
+      - name: Install/Enable SSH server
         run: |
-          choco install -y openssh -params '"/SSHServerFeature /KeyBasedAuthenticationFeature"'
+          $osVersion = (Get-CimInstance Win32_OperatingSystem).Caption
+          Write-Host "Operating System: $osVersion"
+
+          if ($osVersion -like "*2025*") {
+            Write-Host "=== Windows Server 2025 detected - OpenSSH is pre-installed ==="
+
+            # On Windows Server 2025, OpenSSH is pre-installed but not enabled
+            # Start and enable the SSH service
+            Start-Service sshd
+            Set-Service -Name sshd -StartupType 'Automatic'
+
+            Write-Host "SSH service started and set to automatic startup"
+          }
+          else {
+            Write-Host "=== Windows Server 2022 or earlier - Installing OpenSSH via Chocolatey ==="
+
+            # On Windows Server 2022 and earlier, use Chocolatey
+            choco install -y openssh -params '"/SSHServerFeature /KeyBasedAuthenticationFeature"'
+          }
         shell: powershell
+
+      - name: Configure Windows Firewall for SSH
+        run: |
+          # Create firewall rule to allow inbound SSH on port 22
+          New-NetFirewallRule -Name 'OpenSSH-Server-In-TCP' `
+            -DisplayName 'OpenSSH Server (sshd)' `
+            -Enabled True `
+            -Direction Inbound `
+            -Protocol TCP `
+            -Action Allow `
+            -LocalPort 22 `
+            -Profile Any -ErrorAction SilentlyContinue
+
+          # Verify the firewall rule was created
+          Write-Host "=== Firewall Rule ==="
+          Get-NetFirewallRule -Name 'OpenSSH-Server-In-TCP' | Select-Object Name, Enabled, Direction, Action
+
+          # Verify sshd is running
+          Write-Host "`n=== SSHD Service Status ==="
+          Get-Service sshd
+
+          # Check what's listening on port 22
+          Write-Host "`n=== Listening on Port 22 ==="
+          netstat -an | Select-String ":22 "
+
+          Write-Host "`n=== SSH server is ready ==="
+        shell: powershell
+
       - name: Start SSH via ngrok
         run: |
           echo 'C:\msys64\usr\bin' >> $GITHUB_PATH
@@ -20,6 +76,7 @@ jobs:
           NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
           USER_PASS: ${{ secrets.NGROK_PASS }}
         shell: bash
+
       - name: Keep tunnel alive for 24 hours
         run: sleep 86400
         shell: bash
